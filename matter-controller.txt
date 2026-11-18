@@ -1,0 +1,81 @@
+matter-controller/
+├── Cargo.toml
+├── build.rs                     # codegen: cluster XML -> Rust types
+├── data/
+│   ├── clusters/                # cluster/data model XML from the spec repos
+│   ├── paa/                     # PAA root certs (test + DCL production)
+│   └── vectors/                 # SPAKE2+, HKDF, CCM, TLV test vectors
+├── src/
+│   ├── lib.rs
+│   ├── tlv/                     # 1. encoding
+│   │   ├── reader.rs
+│   │   ├── writer.rs
+│   │   ├── tag.rs
+│   │   └── element.rs
+│   ├── payload/                 # 2. onboarding codes
+│   │   ├── qr.rs                # MT: + base38
+│   │   ├── manual.rs            # manual pairing code + Verhoeff
+│   │   └── setup.rs             # discriminator, passcode, vendor/product
+│   ├── crypto/                  # thin wrappers over RustCrypto
+│   │   ├── aead.rs              # AES-CCM
+│   │   ├── kdf.rs               # HKDF, PBKDF2
+│   │   ├── p256.rs              # ECDH, ECDSA helpers
+│   │   ├── spake2p.rs           # SPAKE2+ (your own implementation)
+│   │   └── rng.rs
+│   ├── transport/               # 3. messaging
+│   │   ├── udp.rs               # IPv6 socket, scope IDs, multicast
+│   │   ├── message.rs           # message + protocol header codec
+│   │   ├── counter.rs           # message counters, replay window
+│   │   ├── exchange.rs          # exchange manager
+│   │   ├── mrp.rs               # acks, retransmit, backoff
+│   │   └── session.rs           # session table, keys, session params
+│   ├── secure/                  # 4 + 6. handshakes
+│   │   ├── pase.rs
+│   │   ├── case.rs              # Sigma1/2/3 + resumption
+│   │   └── keys.rs              # session key schedule
+│   ├── cert/                    # 5. certificates
+│   │   ├── compact.rs           # Matter TLV cert parse/encode
+│   │   ├── der.rs               # TLV <-> X.509 DER (signature input)
+│   │   ├── chain.rs             # RCAC/ICAC/NOC validation
+│   │   └── ca.rs                # your root CA, NOC issuing
+│   ├── fabric/
+│   │   ├── fabric.rs            # fabric ID, node IDs, IPK, compressed ID
+│   │   ├── acl.rs
+│   │   └── store.rs             # persistence (files or sqlite)
+│   ├── im/                      # 7. interaction model
+│   │   ├── path.rs              # attribute/command paths, wildcards
+│   │   ├── read.rs
+│   │   ├── write.rs
+│   │   ├── invoke.rs
+│   │   ├── subscribe.rs         # subscriptions, keep-alive, resubscribe
+│   │   ├── report.rs            # chunked reports
+│   │   └── status.rs
+│   ├── datamodel/               # 8. generated + hand-written
+│   │   ├── generated/           # output of build.rs (clusters, attrs, cmds)
+│   │   └── types.rs
+│   ├── discovery/               # 9. mDNS
+│   │   ├── commissionable.rs    # _matterc._udp
+│   │   └── operational.rs       # <compressed-fabric>-<node>._matter._tcp
+│   ├── commissioning/           # 10. commissioner
+│   │   ├── flow.rs              # state machine for the full sequence
+│   │   ├── attestation.rs       # DAC/PAI/PAA verification
+│   │   ├── network.rs           # Thread dataset provisioning
+│   │   └── window.rs            # open/close commissioning window
+│   ├── ble/                     # 11. later
+│   │   ├── btp.rs               # BTP handshake and framing
+│   │   └── gatt.rs              # btleplug glue
+│   └── controller/              # public API tying it together
+│       ├── mod.rs               # Controller::commission, read, invoke, subscribe
+│       └── node.rs              # per-node handle, session reuse
+├── examples/
+│   ├── parse_qr.rs
+│   ├── pase_to_device.rs
+│   └── toggle_light.rs
+├── tests/
+│   ├── vectors.rs               # crypto and TLV known-answer tests
+│   ├── loopback.rs              # controller vs rs-matter example device
+│   └── common/
+├── tools/
+│   └── capture/                 # scripts for Wireshark / key log helpers
+└── src/bin/
+    └── mc.rs                    # CLI: commission, read, invoke, subscribe
